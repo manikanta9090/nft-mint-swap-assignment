@@ -1,26 +1,36 @@
+import wallet from "../turbin3-wallet.json"
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults"
 import { createSignerFromKeypair, signerIdentity, generateSigner, percentAmount } from "@metaplex-foundation/umi"
-import { createNft, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
+import { mplTokenMetadata, createNft } from "@metaplex-foundation/mpl-token-metadata"
 
-import wallet from "../turbin3-wallet.json"
-import base58 from "bs58";
-
-const RPC_ENDPOINT = "https://api.devnet.solana.com";
-const umi = createUmi(RPC_ENDPOINT);
+const umi = createUmi("https://api.devnet.solana.com");
 
 let keypair = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(wallet));
-const myKeypairSigner = createSignerFromKeypair(umi, keypair);
-umi.use(signerIdentity(myKeypairSigner));
-umi.use(mplTokenMetadata())
+const signer = createSignerFromKeypair(umi, keypair);
 
-const mint = generateSigner(umi);
+umi.use(signerIdentity(signer));
+umi.use(mplTokenMetadata());
 
 (async () => {
-    // let tx = ???
-    // let result = await tx.sendAndConfirm(umi);
-    // const signature = base58.encode(result.signature);
-    
-    // console.log(`Succesfully Minted! Check out your TX here:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`)
+  try {
 
-    console.log("Mint Address: ", mint.publicKey);
+    // 🔥 REPLACE THIS WITH YOUR METADATA URI
+    const metadataUri = "https://gateway.irys.xyz/ByWYcB1wDT4PBxrs5jtMbTtrmZJtdGsQYbKvGmEUm7Ym";
+
+    const mint = generateSigner(umi);
+
+    await createNft(umi, {
+      mint,
+      name: "Manikanta NFT",
+      symbol: "MNFT",
+      uri: metadataUri,
+      sellerFeeBasisPoints: percentAmount(5),
+    }).sendAndConfirm(umi);
+
+    console.log("NFT Minted Successfully!");
+    console.log("Mint Address:", mint.publicKey);
+
+  } catch (error) {
+    console.log("Oops.. Something went wrong", error);
+  }
 })();
